@@ -138,34 +138,43 @@ def reject_user(user_id: str):
 from pydantic import BaseModel
 
 # 1. Define what data we expect from the Login Page
-class LoginRequest(BaseModel):
-    phone: str
+# ==========================================
+# ADMIN AUTHENTICATION LOGIC
+# ==========================================
+class LoginModel(BaseModel):
+    username: str
     password: str
 
-# 2. The Login Route
+class PasswordChangeModel(BaseModel):
+    new_password: str
+
 @app.post("/login")
-def login_user(request: LoginRequest):
-    # A. Find user by phone
-    user = users_collection.find_one({"phone": request.phone})
+def login(data: LoginModel):
+    # Fetch custom password from DB if it was changed
+    admin_settings = db.settings.find_one({"type": "admin_credentials"})
     
-    if not user:
-        raise HTTPException(status_code=400, detail="User not found. Please register first.")
+    # Default Credentials
+    admin_username = "KTMTFAMILY WEBSITE"
+    admin_password = "KTMTPASSWORD"
     
-    # B. Check Password (In real life, we would hash this!)
-    if user["password"] != request.password:
-        raise HTTPException(status_code=400, detail="Wrong password.")
-        
-    # C. Check Approval Status
-    if user["status"] != "Approved":
-        raise HTTPException(status_code=403, detail="Your account is not approved yet. Ask Admin.")
-        
-    # D. Success! Return the user's name and photo
-    return {
-        "message": "Login Successful", 
-        "name": user["name"],
-        "photo": user["photo"],
-        "isAdmin": user.get("isAdmin", False) # Send admin status if it exists
-    }    
+    # If a new password was saved, use it
+    if admin_settings:
+        admin_password = admin_settings.get("password", "KTMTPASSWORD")
+
+    if data.username == admin_username and data.password == admin_password:
+        return {"message": "Login successful", "isAdmin": True, "name": "Admin"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+@app.put("/admin/change-password")
+def change_password(data: PasswordChangeModel):
+    # Save the new password to the database
+    db.settings.update_one(
+        {"type": "admin_credentials"},
+        {"$set": {"password": data.new_password, "type": "admin_credentials"}},
+        upsert=True
+    )
+    return {"message": "Password updated successfully"}
 # ==========================================
 # ADD THIS TO backend/main.py (At the bottom)
 # ==========================================
