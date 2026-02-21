@@ -61,8 +61,20 @@ async def register_user(
     jobType: str = Form(...),     # e.g., "Student" or "Job"
     jobDetails: str = Form(...),  # e.g., "Class 10" or "Engineer"
     talent: str = Form(...),      # e.g., "Drawing"
-    photo: UploadFile = File(...)
+    photo: Optional[UploadFile] = File(None)
 ):
+image_url = "https://via.placeholder.com/150" # Default placeholder avatar
+    
+    if photo is not None:
+        try:
+            # PUT YOUR EXISTING IMGUR / UPLOAD CODE HERE
+            # Example: upload_to_imgur(photo.file.read())
+            # image_url = uploaded_link
+            pass
+        except Exception:
+            raise HTTPException(status_code=500, detail="Image upload failed")
+            
+    # Then save to database using image_url...
     if users_collection.find_one({"phone": phone}):
         raise HTTPException(status_code=400, detail="Phone already registered")
 
