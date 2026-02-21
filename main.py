@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
 import os
+import uuid
+from pydantic import BaseModel
 
 # 1. Load Secrets
 load_dotenv()
@@ -183,3 +185,36 @@ def get_tree():
             "talent": user.get("talent", "N/A")
         })
     return users
+    # ==========================================
+# EVENTS API LOGIC (Dynamic Highlights)
+# ==========================================
+
+class EventModel(BaseModel):
+    title: str
+    description: str
+    date: str
+    location: str
+    image_url: str
+
+@app.get("/events")
+def get_events():
+    # Fetch all events from database
+    events = list(db.events.find({}, {"_id": 0}))
+    return events
+
+@app.post("/admin/events")
+def create_event(event: EventModel):
+    event_dict = event.dict()
+    event_dict["id"] = str(uuid.uuid4()) # Generate unique ID
+    db.events.insert_one(event_dict)
+    return {"message": "Event created successfully"}
+
+@app.put("/admin/events/{event_id}")
+def update_event(event_id: str, event: EventModel):
+    db.events.update_one({"id": event_id}, {"$set": event.dict()})
+    return {"message": "Event updated successfully"}
+
+@app.delete("/admin/events/{event_id}")
+def delete_event(event_id: str):
+    db.events.delete_one({"id": event_id})
+    return {"message": "Event deleted successfully"}
