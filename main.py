@@ -57,6 +57,7 @@ async def register_user(
     subFamily: str = Form(...),
     parent: str = Form(...),
     # --- NEW FIELDS ---
+    pincode: str,
     jobType: str = Form(...),     # e.g., "Student" or "Job"
     jobDetails: str = Form(...),  # e.g., "Class 10" or "Engineer"
     talent: str = Form(...),      # e.g., "Drawing"
@@ -206,6 +207,7 @@ class EventModel(BaseModel):
     location: str
     image_url: str
     registration_link: Optional[str] = ""
+    
 
 @app.get("/events")
 def get_events():
