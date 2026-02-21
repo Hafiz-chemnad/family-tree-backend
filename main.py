@@ -7,6 +7,7 @@ import cloudinary.uploader
 import os
 import uuid
 from pydantic import BaseModel
+from typing import Optional
 
 # 1. Load Secrets
 load_dotenv()
@@ -195,6 +196,7 @@ class EventModel(BaseModel):
     date: str
     location: str
     image_url: str
+    registration_link: Optional[str] = ""
 
 @app.get("/events")
 def get_events():
