@@ -57,7 +57,8 @@ async def register_user(
     mainFamily: str = Form(...),
     subFamily: str = Form(...),
     parent: str = Form(...),
-    pincode: str = Form(...),         # FIXED: Added Form(...) to prevent crashes
+    pincode: str = Form(...),
+    address: str = Form(...),         # FIXED: Added Form(...) to prevent crashes
     jobType: str = Form(...),         
     jobDetails: str = Form(...),      
     talent: str = Form(...),          
@@ -86,7 +87,8 @@ async def register_user(
         "mainFamily": mainFamily,
         "subFamily": subFamily,
         "parent": parent,
-        "pincode": pincode,           # FIXED: Added pincode to Database
+        "pincode": pincode,
+        "address": address,           # FIXED: Added pincode to Database
         "jobType": jobType,
         "jobDetails": jobDetails,
         "talent": talent,
