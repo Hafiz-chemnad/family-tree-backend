@@ -52,6 +52,8 @@ def home():
 @app.post("/register")
 async def register_user(
     fullName: str = Form(...),
+    gender: str = Form(...),            # <-- NEW
+    memberType: str = Form(...),        # <-- NEW
     phone: str = Form(...),
     password: str = Form(...),
     mainFamily: str = Form(...),
@@ -82,6 +84,7 @@ async def register_user(
     # Create the user profile payload
     new_user = {
         "name": fullName,
+
         "phone": phone,
         "password": password,
         "mainFamily": mainFamily,
