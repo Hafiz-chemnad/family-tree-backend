@@ -188,6 +188,8 @@ def get_tree():
         users.append({
             "_id": str(user["_id"]),          # Safely passes ID for Admin actions
             "name": user["name"],
+            "gender": user.get("gender", "N/A"),               # <-- NEW
+            "memberType": user.get("memberType", "Blood_Relative"),
             "photo": user["photo"],
             "phone": user.get("phone", ""),   # Passes phone for approval fixing
             "mainFamily": user["mainFamily"],
