@@ -52,6 +52,8 @@ def home():
 @app.post("/register")
 async def register_user(
     fullName: str = Form(...),
+    dob: str = Form(...),
+    bloodGroup: Optional[str] = Form(""),
     gender: str = Form(...),            # <-- NEW
     memberType: str = Form(...),        # <-- NEW
     phone: str = Form(...),
@@ -84,6 +86,8 @@ async def register_user(
     # Create the user profile payload
     new_user = {
         "name": fullName,
+        "dob": dob,
+        "bloodGroup": bloodGroup,
         "gender": gender,               # <-- NEW
         "memberType": memberType,
         "phone": phone,
@@ -188,6 +192,7 @@ def get_tree():
         users.append({
             "_id": str(user["_id"]),          # Safely passes ID for Admin actions
             "name": user["name"],
+            "bloodGroup": user.get("bloodGroup", ""),
             "gender": user.get("gender", "N/A"),               # <-- NEW
             "memberType": user.get("memberType", "Blood_Relative"),
             "photo": user["photo"],
@@ -233,3 +238,26 @@ def update_event(event_id: str, event: EventModel):
 def delete_event(event_id: str):
     db.events.delete_one({"id": event_id})
     return {"message": "Event deleted successfully"}
+# ==========================================
+# 6. GALLERY API LOGIC
+# ==========================================
+class GalleryModel(BaseModel):
+    image_url: str
+    caption: str
+
+@app.get("/gallery")
+def get_gallery():
+    images = list(db.gallery.find({}, {"_id": 0}))
+    return images
+
+@app.post("/admin/gallery")
+def add_gallery(item: GalleryModel):
+    item_dict = item.model_dump()
+    item_dict["id"] = str(uuid.uuid4())
+    db.gallery.insert_one(item_dict)
+    return {"message": "Image added to gallery"}
+
+@app.delete("/admin/gallery/{image_id}")
+def delete_gallery(image_id: str):
+    db.gallery.delete_one({"id": image_id})
+    return {"message": "Image deleted"}    
