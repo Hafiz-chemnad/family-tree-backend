@@ -84,7 +84,8 @@ async def register_user(
     # Create the user profile payload
     new_user = {
         "name": fullName,
-
+        "gender": gender,               # <-- NEW
+        "memberType": memberType,
         "phone": phone,
         "password": password,
         "mainFamily": mainFamily,
