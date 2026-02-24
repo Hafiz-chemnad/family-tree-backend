@@ -52,6 +52,7 @@ def home():
 @app.post("/register")
 async def register_user(
     fullName: str = Form(...),
+    lifeStatus: str = Form("Living"),
     dob: str = Form(...),
     gender: str = Form(...),            # <-- NEW
     memberType: str = Form(...),        # <-- NEW
