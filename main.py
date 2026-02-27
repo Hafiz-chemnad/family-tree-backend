@@ -204,7 +204,45 @@ def get_tree():
             "lifeStatus": user.get("lifeStatus", "Living") # 🟢 Added Correctly
         })
     return users
+# ==========================================
+# ADMIN: MANAGE APPROVED USERS (EDIT/DELETE)
+# ==========================================
+class EditUserModel(BaseModel):
+    name: str
+    phone: str
+    lifeStatus: str
+    jobType: str
+    jobDetails: str
+    talent: str
 
+@app.get("/admin/users")
+def get_all_approved_users():
+    users = []
+    for user in users_collection.find({"status": "Approved"}):
+        user["id"] = str(user["_id"])
+        del user["_id"]
+        users.append(user)
+    return users
+
+@app.put("/admin/users/{user_id}")
+def edit_approved_user(user_id: str, data: EditUserModel):
+    users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "name": data.name,
+            "phone": data.phone,
+            "lifeStatus": data.lifeStatus,
+            "jobType": data.jobType,
+            "jobDetails": data.jobDetails,
+            "talent": data.talent
+        }}
+    )
+    return {"message": "User Updated"}
+
+@app.delete("/admin/users/{user_id}")
+def delete_approved_user(user_id: str):
+    users_collection.delete_one({"_id": ObjectId(user_id)})
+    return {"message": "User Deleted"}
 # ==========================================
 # 5. EVENTS API LOGIC (Dynamic Highlights)
 # ==========================================
