@@ -47,12 +47,11 @@ def home():
     return {"message": "Family Tree Backend is Running!"}
 
 # ==========================================
-# 1. REGISTER ROUTE
+# 1. REGISTER ROUTE (Removed lifeStatus & talent)
 # ==========================================
 @app.post("/register")
 async def register_user(
     fullName: str = Form(...),
-    lifeStatus: str = Form("Living"),
     dob: str = Form(...),
     gender: str = Form(...),            
     memberType: str = Form(...),        
@@ -65,7 +64,6 @@ async def register_user(
     address: str = Form(...),         
     jobType: str = Form(...),         
     jobDetails: str = Form(...),      
-    talent: str = Form(...),          
     photo: Optional[UploadFile] = File(None)
 ):
     # Prevent Duplicate Phone Numbers (Only check if not dummy phone)
@@ -83,13 +81,11 @@ async def register_user(
             photo_url = upload_result.get("secure_url")
         except Exception as e:
             print(e) # Log validation error
-            # Continue even if image fails, don't stop registration
             pass
 
     # Create the user profile payload
     new_user = {
         "name": fullName,
-        "lifeStatus": lifeStatus,  # 🟢 FIXED: Removed user.get() error
         "dob": dob,
         "gender": gender,               
         "memberType": memberType,
@@ -102,7 +98,6 @@ async def register_user(
         "address": address,           
         "jobType": jobType,
         "jobDetails": jobDetails,
-        "talent": talent,
         "photo": photo_url,
         "status": "Pending",
         "isAdmin": False
@@ -190,52 +185,60 @@ def get_tree():
     for user in users_collection.find({"status": "Approved"}):
         users.append({
             "_id": str(user["_id"]),          
-            "name": user["name"],
+            "name": user.get("name", "Unknown"),
             "gender": user.get("gender", "N/A"),               
             "memberType": user.get("memberType", "Blood_Relative"),
-            "photo": user["photo"],
+            "photo": user.get("photo", "https://via.placeholder.com/150"),
             "phone": user.get("phone", ""),   
-            "mainFamily": user["mainFamily"],
+            "mainFamily": user.get("mainFamily", "Unknown"),
             "subFamily": user.get("subFamily", ""),
-            "parent": user["parent"],
+            "parent": user.get("parent", "Unknown"),
             "jobType": user.get("jobType", "N/A"),
-            "jobDetails": user.get("jobDetails", "N/A"),
-            "talent": user.get("talent", "N/A"),
-            "lifeStatus": user.get("lifeStatus", "Living") # 🟢 Added Correctly
+            "jobDetails": user.get("jobDetails", "N/A")
         })
     return users
+
 # ==========================================
-# ADMIN: MANAGE APPROVED USERS (EDIT/DELETE)
+# 5. ADMIN: MANAGE APPROVED USERS (EDIT/DELETE)
 # ==========================================
 class EditUserModel(BaseModel):
     name: str
     phone: str
-    lifeStatus: str
     jobType: str
     jobDetails: str
-    talent: str
+    photo: Optional[str] = None  # 🟢 NEW: ഫോട്ടോ സ്വീകരിക്കാൻ ഇത് ചേർക്കുക
 
 @app.get("/admin/users")
 def get_all_approved_users():
     users = []
     for user in users_collection.find({"status": "Approved"}):
-        user["id"] = str(user["_id"])
-        del user["_id"]
-        users.append(user)
+        # 🟢 പഴയ 36 പേരെയും എറർ ഇല്ലാതെ ലോഡ് ചെയ്യാൻ ".get()" ഉപയോഗിച്ചിട്ടുണ്ട് 
+        users.append({
+            "id": str(user["_id"]),
+            "name": user.get("name", "Unknown"),
+            "phone": user.get("phone", ""),
+            "jobType": user.get("jobType", "N/A"),
+            "jobDetails": user.get("jobDetails", "N/A"),
+            "photo": user.get("photo", "https://via.placeholder.com/60")
+        })
     return users
 
 @app.put("/admin/users/{user_id}")
 def edit_approved_user(user_id: str, data: EditUserModel):
+    update_data = {
+        "name": data.name,
+        "phone": data.phone,
+        "jobType": data.jobType,
+        "jobDetails": data.jobDetails,
+    }
+    
+    # 🟢 NEW: പുതിയ ഫോട്ടോ വന്നിട്ടുണ്ടെങ്കിൽ അതും അപ്ഡേറ്റ് ചെയ്യും
+    if data.photo:
+        update_data["photo"] = data.photo
+
     users_collection.update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {
-            "name": data.name,
-            "phone": data.phone,
-            "lifeStatus": data.lifeStatus,
-            "jobType": data.jobType,
-            "jobDetails": data.jobDetails,
-            "talent": data.talent
-        }}
+        {"$set": update_data}
     )
     return {"message": "User Updated"}
 
@@ -243,8 +246,9 @@ def edit_approved_user(user_id: str, data: EditUserModel):
 def delete_approved_user(user_id: str):
     users_collection.delete_one({"_id": ObjectId(user_id)})
     return {"message": "User Deleted"}
+
 # ==========================================
-# 5. EVENTS API LOGIC (Dynamic Highlights)
+# 6. EVENTS API LOGIC (Dynamic Highlights)
 # ==========================================
 class EventModel(BaseModel):
     title: str
